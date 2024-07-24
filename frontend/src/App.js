@@ -159,7 +159,7 @@ function App() {
     const leaveCall = () => {
         setCallEnded(true);
         connectionRef.current.destroy();
-        window.location.reload(); // reload the page to reset the state
+        window.location.reload();
     };
 
     return (
