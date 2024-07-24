@@ -11,7 +11,7 @@ import "./App.css";
 import { Hands, HAND_CONNECTIONS } from "@mediapipe/hands";
 import { Camera } from "@mediapipe/camera_utils";
 
-const socket = io.connect('http://localhost:5000');
+const socket = io.connect('https://sl-health.vercel.app');
 
 function App() {
     const [me, setMe] = useState("");
