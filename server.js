@@ -5,9 +5,14 @@ const cors = require('cors'); // Import cors
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
+const io = socketIo(server, {
+    cors: {
+        origin: 'https://sl-health.vercel.app', // Your frontend domain
+        methods: ['GET', 'POST']
+    }
+});
 
-// Configure CORS
+// Configure CORS middleware for Express
 app.use(cors({
     origin: 'https://sl-health.vercel.app', // Your frontend domain
     methods: ['GET', 'POST'],
@@ -37,4 +42,4 @@ io.on('connection', (socket) => {
     });
 });
 
-server.listen(5000, () => console.log('server is running on port 5000'));
+server.listen(5000, () => console.log('Server is running on port 5000'));
