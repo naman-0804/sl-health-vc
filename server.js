@@ -1,18 +1,18 @@
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
-const cors = require('cors'); // Import cors
+const cors = require('cors'); 
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
     cors: {
-        origin: 'https://sl-health.vercel.app', // Your frontend domain
+        origin: 'https://sl-health.vercel.app',
         methods: ['GET', 'POST']
     }
 });
 
-// Configure CORS middleware for Express
+
 app.use(cors({
     origin: 'https://sl-health.vercel.app', // Your frontend domain
     methods: ['GET', 'POST'],
