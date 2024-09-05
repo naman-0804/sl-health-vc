@@ -10,6 +10,7 @@ import io from "socket.io-client";
 import "./App.css";
 import { Hands, HAND_CONNECTIONS } from "@mediapipe/hands";
 import { Camera } from "@mediapipe/camera_utils";
+import * as tf from '@tensorflow/tfjs';
 
 const socket = io.connect('https://sl-health.onrender.com');
 
@@ -23,16 +24,17 @@ function App() {
     const [idToCall, setIdToCall] = useState("");
     const [callEnded, setCallEnded] = useState(false);
     const [name, setName] = useState("");
-    const [role, setRole] = useState("");  
+    const [role, setRole] = useState("");
+    const [transcript, setTranscript] = useState([]);
     const myVideo = useRef();
     const userVideo = useRef();
     const canvasRef = useRef();
-    const modelRef = useRef(null); 
-    const connectionRef = useRef();  
+    const modelRef = useRef(null);
+    const connectionRef = useRef();
 
     useEffect(() => {
         const loadModel = async () => {
-            // modelRef.current = await tf.loadLayersModel('path/to/your/model.h5');
+            modelRef.current = await tf.loadLayersModel("/model.json");
         };
 
         if (role === "patient") {
@@ -47,6 +49,7 @@ function App() {
                 if (results.multiHandLandmarks) {
                     for (const landmarks of results.multiHandLandmarks) {
                         drawHand(canvasCtx, landmarks, HAND_CONNECTIONS);
+                        makePrediction(landmarks);
                     }
                 }
 
@@ -84,11 +87,10 @@ function App() {
             navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
                 setStream(stream);
                 myVideo.current.srcObject = stream;
-                // Handle predictions with the loaded .h5 model
-                const predictWithModel = async () => {
-                    // Use modelRef.current to make predictions based on video frames
-                };
-                predictWithModel();
+
+                socket.on("prediction", (prediction) => {
+                    setTranscript((prev) => [...prev, prediction]);
+                });
             });
         }
 
@@ -105,6 +107,33 @@ function App() {
 
         loadModel();
     }, [role]);
+    const makePrediction = async (landmarks) => {
+        if (modelRef.current) {
+            // Convert landmarks to a 2D tensor format
+            // landmarks is an array of objects with x, y, z properties
+            const input = landmarks.map(l => [l.x, l.y, l.z]);
+    
+            // Check dimensions
+            console.log("Input shape:", [1, input.length, 3]);
+    
+            // Create a tensor with shape [1, landmarks.length, 3]
+            const tensorInput = tf.tensor2d(input, [1, input.length, 3]);
+    
+            // Make the prediction
+            const prediction = await modelRef.current.predict(tensorInput).data();
+            const predictionText = predictionToText(tf.tensor(prediction)); // Convert prediction to text
+    
+            // Send the prediction to the doctor via WebSocket
+            socket.emit("prediction", predictionText);
+        }
+    };
+
+    const predictionToText = (prediction) => {
+        const output = prediction.dataSync();
+        const maxIndex = output.indexOf(Math.max(...output));
+        const classNames = ["Gesture1", "Gesture2", "Gesture3"];
+        return classNames[maxIndex];
+    };
 
     const drawHand = (canvasCtx, landmarks, connections) => {
         for (let i = 0; i < connections.length; i++) {
@@ -184,7 +213,7 @@ function App() {
 
     return (
         <>
-            <h1 style={{ textAlign: "center"}}>VIDEO CALL INTERFACE</h1>
+            <h1 style={{ textAlign: "center" }}>VIDEO CALL INTERFACE</h1>
             <div className="container">
                 <div className="role-selector">
                     <Button onClick={() => setRole("patient")}>Join as Patient</Button>
@@ -251,17 +280,23 @@ function App() {
                         )}
                     </div>
                 </div>
-                <div>
-                    {receivingCall && !callAccepted ? (
-                        <div className="caller">
-                            <h1>{name} is calling...</h1>
-                            <Button variant="contained" color="primary" onClick={answerCall}>
-                                Answer
-                            </Button>
-                        </div>
-                    ) : null}
-                </div>
+                {receivingCall && !callAccepted ? (
+                    <div className="caller">
+                        <h1>{name} is calling...</h1>
+                        <Button variant="contained" color="primary" onClick={answerCall}>
+                            Answer
+                        </Button>
+                    </div>
+                ) : null}
             </div>
+            {role === "doctor" && (
+                <div className="transcript">
+                    <h2>Transcript:</h2>
+                    {transcript.map((item, index) => (
+                        <p key={index}>{item}</p>
+                    ))}
+                </div>
+            )}
         </>
     );
 }
