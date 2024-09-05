@@ -7,14 +7,14 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
     cors: {
-        origin: 'https://sl-health.vercel.app',
+        origin: 'http://localhost:5000/',
         methods: ['GET', 'POST']
     }
 });
 
 
 app.use(cors({
-    origin: 'https://sl-health.vercel.app', // Your frontend domain
+    origin: 'http://localhost:5000/', // Your frontend domain
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type']
 }));
