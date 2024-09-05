@@ -12,9 +12,8 @@ const io = socketIo(server, {
     }
 });
 
-
 app.use(cors({
-    origin: 'https://sl-health.vercel.app', // Your frontend domain
+    origin: 'https://sl-health.vercel.app', 
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type']
 }));
@@ -25,6 +24,7 @@ io.on('connection', (socket) => {
     socket.emit('me', socket.id);
 
     socket.on('disconnect', () => {
+        delete users[socket.id];  // Clean up on disconnect
         socket.broadcast.emit('callEnded');
     });
 
@@ -42,4 +42,5 @@ io.on('connection', (socket) => {
     });
 });
 
-server.listen(5000, () => console.log('Server is running on port 5000'));
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, () => console.log(`Server is running on port ${PORT}`));

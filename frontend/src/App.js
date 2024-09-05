@@ -10,6 +10,8 @@ import io from "socket.io-client";
 import "./App.css";
 import { Hands, HAND_CONNECTIONS } from "@mediapipe/hands";
 import { Camera } from "@mediapipe/camera_utils";
+// You can import your model loader here
+// import * as tf from '@tensorflow/tfjs';  (For loading .h5 model)
 
 const socket = io.connect('https://sl-health.onrender.com');
 
@@ -23,56 +25,74 @@ function App() {
     const [idToCall, setIdToCall] = useState("");
     const [callEnded, setCallEnded] = useState(false);
     const [name, setName] = useState("");
+    const [role, setRole] = useState("");  // Role state
     const myVideo = useRef();
     const userVideo = useRef();
-    const connectionRef = useRef();
     const canvasRef = useRef();
-
+    const modelRef = useRef(null); // Model reference
+    const connectionRef = useRef();  // Add this line
     useEffect(() => {
-        const onResults = (results) => {
-            const canvasElement = canvasRef.current;
-            const canvasCtx = canvasElement.getContext("2d");
-
-            canvasCtx.save();
-            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-            canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
-
-            if (results.multiHandLandmarks) {
-                for (const landmarks of results.multiHandLandmarks) {
-                    drawHand(canvasCtx, landmarks, HAND_CONNECTIONS);
-                }
-            }
-
-            canvasCtx.restore();
+        // Placeholder for loading the .h5 model
+        const loadModel = async () => {
+            // modelRef.current = await tf.loadLayersModel('path/to/your/model.h5');
         };
 
-        navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
-            setStream(stream);
-            myVideo.current.srcObject = stream;
+        if (role === "patient") {
+            const onResults = (results) => {
+                const canvasElement = canvasRef.current;
+                const canvasCtx = canvasElement.getContext("2d");
 
-            const hands = new Hands({
-                locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+                canvasCtx.save();
+                canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+                canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+
+                if (results.multiHandLandmarks) {
+                    for (const landmarks of results.multiHandLandmarks) {
+                        drawHand(canvasCtx, landmarks, HAND_CONNECTIONS);
+                    }
+                }
+
+                canvasCtx.restore();
+            };
+
+            navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
+                setStream(stream);
+                myVideo.current.srcObject = stream;
+
+                const hands = new Hands({
+                    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+                });
+
+                hands.setOptions({
+                    maxNumHands: 1,
+                    modelComplexity: 1,
+                    minDetectionConfidence: 0.5,
+                    minTrackingConfidence: 0.5
+                });
+
+                hands.onResults(onResults);
+
+                const camera = new Camera(myVideo.current, {
+                    onFrame: async () => {
+                        await hands.send({ image: myVideo.current });
+                    },
+                    width: 1280,
+                    height: 720
+                });
+
+                camera.start();
             });
-
-            hands.setOptions({
-                maxNumHands: 1,
-                modelComplexity: 1,
-                minDetectionConfidence: 0.5,
-                minTrackingConfidence: 0.5
+        } else if (role === "doctor") {
+            navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
+                setStream(stream);
+                myVideo.current.srcObject = stream;
+                // Handle predictions with the loaded .h5 model
+                const predictWithModel = async () => {
+                    // Use modelRef.current to make predictions based on video frames
+                };
+                predictWithModel();
             });
-
-            hands.onResults(onResults);
-
-            const camera = new Camera(myVideo.current, {
-                onFrame: async () => {
-                    await hands.send({ image: myVideo.current });
-                },
-                width: 1280,
-                height: 720
-            });
-
-            camera.start();
-        });
+        }
 
         socket.on("me", (id) => {
             setMe(id);
@@ -84,7 +104,9 @@ function App() {
             setName(data.name);
             setCallerSignal(data.signal);
         });
-    }, []);
+
+        loadModel();
+    }, [role]);
 
     const drawHand = (canvasCtx, landmarks, connections) => {
         for (let i = 0; i < connections.length; i++) {
@@ -166,12 +188,19 @@ function App() {
         <>
             <h1 style={{ textAlign: "center"}}>VIDEO CALL INTERFACE</h1>
             <div className="container">
+                <div className="role-selector">
+                    <Button onClick={() => setRole("patient")}>Join as Patient</Button>
+                    <Button onClick={() => setRole("doctor")}>Join as Doctor</Button>
+                </div>
+
                 <div className="video-container">
                     <div className="video">
                         {stream && (
                             <>
                                 <video playsInline muted ref={myVideo} autoPlay style={{ width: "300px" }} />
-                                <canvas ref={canvasRef} style={{ position: "absolute", width: "300px" }}></canvas>
+                                {role === "patient" && (
+                                    <canvas ref={canvasRef} style={{ position: "absolute", width: "300px" }}></canvas>
+                                )}
                             </>
                         )}
                     </div>
