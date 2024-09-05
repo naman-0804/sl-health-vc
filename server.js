@@ -7,14 +7,14 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
     cors: {
-        origin: 'http://localhost:3000/',
+        origin: 'http://localhost:3000',
         methods: ['GET', 'POST']
     }
 });
 
 
 app.use(cors({
-    origin: 'http://localhost:3000/', // Your frontend domain
+    origin: 'http://localhost:3000', // Your frontend domain
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type']
 }));
