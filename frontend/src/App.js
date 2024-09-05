@@ -10,8 +10,6 @@ import io from "socket.io-client";
 import "./App.css";
 import { Hands, HAND_CONNECTIONS } from "@mediapipe/hands";
 import { Camera } from "@mediapipe/camera_utils";
-// You can import your model loader here
-// import * as tf from '@tensorflow/tfjs';  (For loading .h5 model)
 
 const socket = io.connect('https://sl-health.onrender.com');
 
@@ -31,8 +29,8 @@ function App() {
     const canvasRef = useRef();
     const modelRef = useRef(null); // Model reference
     const connectionRef = useRef();  // Add this line
+
     useEffect(() => {
-        // Placeholder for loading the .h5 model
         const loadModel = async () => {
             // modelRef.current = await tf.loadLayersModel('path/to/your/model.h5');
         };
@@ -55,7 +53,7 @@ function App() {
                 canvasCtx.restore();
             };
 
-            navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
+            navigator.mediaDevices.getUserMedia({ video: true, audio: false }).then((stream) => {
                 setStream(stream);
                 myVideo.current.srcObject = stream;
 
@@ -197,9 +195,18 @@ function App() {
                     <div className="video">
                         {stream && (
                             <>
-                                <video playsInline muted ref={myVideo} autoPlay style={{ width: "300px" }} />
+                                <video 
+                                    playsInline 
+                                    muted 
+                                    ref={myVideo} 
+                                    autoPlay 
+                                    style={{ width: "300px", display: role === "patient" ? "none" : "block" }} 
+                                />
                                 {role === "patient" && (
-                                    <canvas ref={canvasRef} style={{ position: "absolute", width: "300px" }}></canvas>
+                                    <canvas 
+                                        ref={canvasRef} 
+                                        style={{ position: "absolute", width: "300px" }} 
+                                    />
                                 )}
                             </>
                         )}

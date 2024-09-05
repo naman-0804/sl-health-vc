@@ -1,96 +1,50 @@
-/* Basic styling for the entire app */
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background-color: #f5f5f5;
-}
-
-/* Container for the main content */
 .container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+	display: grid;
+	grid-template-columns: 7fr 3fr;
 }
 
-/* Styling for the role selector buttons */
-.role-selector {
-    margin-bottom: 20px;
-}
-
-.role-selector button {
-    margin: 5px;
-    padding: 10px 20px;
-    font-size: 16px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    background-color: #007bff;
-    color: #fff;
-}
-
-.role-selector button:hover {
-    background-color: #0056b3;
-}
-
-/* Video container to hold video elements */
-.video-container {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    position: relative;
-}
-
-/* Video element styling */
-.video {
-    position: relative;
-}
-
-video {
-    border: 2px solid #ddd;
-    border-radius: 5px;
-}
-
-/* Canvas styling */
-canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-}
-
-/* Styling for the ID and call controls section */
 .myId {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
+	margin-right: 5rem;
+	border-radius: 5px;
+	background: #c9d6ff; 
+	background: -webkit-linear-gradient(to right, #e2e2e2, #c9d6ff); 
+	background: linear-gradient(
+		to right,
+		#e2e2e2,
+		#c9d6ff
+	); 
 
-.myId .MuiTextField-root {
-    margin: 10px;
+	padding: 2rem;
+	display: grid;
+	justify-content: center;
+	align-content: center;
 }
 
 .call-button {
-    margin: 20px;
+	text-align: center;
+	margin-top: 2rem;
 }
 
-/* Styling for call controls */
-.call-button button,
-.call-button .MuiIconButton-root {
-    margin: 5px;
+.video-container {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	justify-content: center;
+	align-content: center;
+	margin-top: 10rem;
+	margin-left: 10rem;
 }
 
-/* Styling for the caller notification */
 .caller {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 20px;
+	text-align: center;
+	color: #fff;
+}
+
+body {
+	background: #4776e6; 
+	background: -webkit-linear-gradient(to right, #8e54e9, #4776e6); 
+	background: linear-gradient(
+		to right,
+		#8e54e9,
+		#4776e6
+	); 
 }
