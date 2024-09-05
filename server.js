@@ -24,7 +24,7 @@ io.on('connection', (socket) => {
     socket.emit('me', socket.id);
 
     socket.on('disconnect', () => {
-        delete users[socket.id];  // Clean up on disconnect
+        delete users[socket.id]; 
         socket.broadcast.emit('callEnded');
     });
 

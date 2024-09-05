@@ -23,12 +23,12 @@ function App() {
     const [idToCall, setIdToCall] = useState("");
     const [callEnded, setCallEnded] = useState(false);
     const [name, setName] = useState("");
-    const [role, setRole] = useState("");  // Role state
+    const [role, setRole] = useState("");  
     const myVideo = useRef();
     const userVideo = useRef();
     const canvasRef = useRef();
-    const modelRef = useRef(null); // Model reference
-    const connectionRef = useRef();  // Add this line
+    const modelRef = useRef(null); 
+    const connectionRef = useRef();  
 
     useEffect(() => {
         const loadModel = async () => {
