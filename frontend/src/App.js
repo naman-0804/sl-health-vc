@@ -35,13 +35,12 @@ function App() {
     useEffect(() => {
         const loadModel = async () => {
             try {
-                modelRef.current = await tf.loadLayersModel("model.json");
+                modelRef.current = await tf.loadLayersModel("/model.json");
                 console.log("Model loaded successfully");
             } catch (error) {
                 console.error("Error loading model:", error);
             }
         };
-    
 
         if (role === "patient") {
             const onResults = (results) => {
@@ -113,31 +112,65 @@ function App() {
 
         loadModel();
     }, [role]);
+
     const makePrediction = async (landmarks) => {
         if (modelRef.current) {
-            // Convert landmarks to a 2D tensor format
-            // landmarks is an array of objects with x, y, z properties
-            const input = landmarks.map(l => [l.x, l.y, l.z]);
-    
-            // Check dimensions
-            console.log("Input shape:", [1, input.length, 3]);
-    
-            // Create a tensor with shape [1, landmarks.length, 3]
-            const tensorInput = tf.tensor2d(input, [1, input.length, 3]);
-    
-            // Make the prediction
-            const prediction = await modelRef.current.predict(tensorInput).data();
-            const predictionText = predictionToText(tf.tensor(prediction)); // Convert prediction to text
-            console.log('Sending prediction:', predictionText); // Ensure this line executes
-            // Send the prediction to the doctor via WebSocket
-            socket.emit("prediction", predictionText);
+            // Convert landmarks into a flat array of shape [21 * 3]
+            const input = landmarks.flatMap(l => [l.x, l.y, l.z]);  // Flatten to [63] array
+
+            // Log the flattened input for debugging
+            console.log("Flattened input:", input);
+
+            // Create a tensor from the input data
+            // Initialize an empty image with zeros
+            const image = new Float32Array(224 * 224 * 3).fill(0);
+
+            // Map landmarks into the image (you need to define a mapping strategy)
+            // This is a placeholder. You might need to scale or position landmarks correctly.
+            landmarks.forEach((l, index) => {
+                const x = Math.floor(l.x * 224);  // Assuming landmarks.x are normalized
+                const y = Math.floor(l.y * 224);  // Assuming landmarks.y are normalized
+                if (x < 224 && y < 224) {
+                    const pos = (y * 224 + x) * 3;  // 3 channels
+                    image[pos] = l.x;  // Set x value (or any other appropriate transformation)
+                    image[pos + 1] = l.y;  // Set y value
+                    image[pos + 2] = l.z;  // Set z value
+                }
+            });
+
+            // Create a 4D tensor [1, 224, 224, 3]
+            const tensorInput = tf.tensor4d(image, [1, 224, 224, 3]);
+
+            // Log the tensor shape to ensure it's correct
+            console.log("Input tensor shape:", tensorInput.shape);
+
+            try {
+                // Make the prediction
+                const prediction = await modelRef.current.predict(tensorInput);
+
+                // Convert prediction to array and log
+                const predictionArray = await prediction.array();
+                console.log("Prediction array:", predictionArray);
+
+                // Convert the prediction to text
+                const predictionText = predictionToText(predictionArray);
+
+                // Log the prediction
+                console.log("Patient-side prediction:", predictionText);
+
+                // Send the prediction to the doctor via WebSocket
+                socket.emit("prediction", predictionText);
+            } catch (error) {
+                console.error("Error during prediction:", error);
+            }
         }
     };
 
-    const predictionToText = (prediction) => {
-        const output = prediction.dataSync();
+    const predictionToText = (predictionArray) => {
+        // Assuming predictionArray is a 2D array [1, numClasses]
+        const output = predictionArray[0]; // Extract the first element from the array
         const maxIndex = output.indexOf(Math.max(...output));
-        const classNames = ["Gesture1", "Gesture2"];
+        const classNames = ["Hi", "Bye"]; // Replace with actual class names
         return classNames[maxIndex];
     };
 
