@@ -34,8 +34,14 @@ function App() {
 
     useEffect(() => {
         const loadModel = async () => {
-            modelRef.current = await tf.loadLayersModel("/model.json");
+            try {
+                modelRef.current = await tf.loadLayersModel("/keras_model.json");
+                console.log("Model loaded successfully");
+            } catch (error) {
+                console.error("Error loading model:", error);
+            }
         };
+    
 
         if (role === "patient") {
             const onResults = (results) => {
@@ -122,7 +128,7 @@ function App() {
             // Make the prediction
             const prediction = await modelRef.current.predict(tensorInput).data();
             const predictionText = predictionToText(tf.tensor(prediction)); // Convert prediction to text
-    
+            console.log('Sending prediction:', predictionText); // Ensure this line executes
             // Send the prediction to the doctor via WebSocket
             socket.emit("prediction", predictionText);
         }
@@ -131,7 +137,7 @@ function App() {
     const predictionToText = (prediction) => {
         const output = prediction.dataSync();
         const maxIndex = output.indexOf(Math.max(...output));
-        const classNames = ["Gesture1", "Gesture2", "Gesture3"];
+        const classNames = ["Gesture1", "Gesture2"];
         return classNames[maxIndex];
     };
 
