@@ -35,7 +35,7 @@ function App() {
     useEffect(() => {
         const loadModel = async () => {
             try {
-                modelRef.current = await tf.loadLayersModel("/keras_model.json");
+                modelRef.current = await tf.loadLayersModel("model.json");
                 console.log("Model loaded successfully");
             } catch (error) {
                 console.error("Error loading model:", error);
