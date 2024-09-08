@@ -72,40 +72,40 @@ function App() {
       const onResults = (results) => {
         const canvasElement = canvasRef.current;
         const canvasCtx = canvasElement.getContext("2d");
-
+  
         canvasCtx.save();
         canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
         canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
-
+  
         if (results.multiHandLandmarks) {
           for (const landmarks of results.multiHandLandmarks) {
             drawHand(canvasCtx, landmarks, HAND_CONNECTIONS);
             makePrediction(landmarks);
           }
         }
-
+  
         canvasCtx.restore();
       };
-
+  
       navigator.mediaDevices
         .getUserMedia({ video: true, audio: false })
         .then((currentStream) => {
           setStream(currentStream);
           myVideo.current.srcObject = currentStream;
-
+  
           const hands = new Hands({
             locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
           });
-
+  
           hands.setOptions({
             maxNumHands: 1,
             modelComplexity: 1,
             minDetectionConfidence: 0.5,
             minTrackingConfidence: 0.5,
           });
-
+  
           hands.onResults(onResults);
-
+  
           const camera = new Camera(myVideo.current, {
             onFrame: async () => {
               await hands.send({ image: myVideo.current });
@@ -113,45 +113,57 @@ function App() {
             width: 1280,
             height: 720,
           });
-
+  
           camera.start();
         })
         .catch((error) => {
           console.error("Error accessing media devices.", error);
         });
     } else if (role === "doctor") {
-        navigator.mediaDevices
-          .getUserMedia({ video: true, audio: true })
-          .then((currentStream) => {
-            setStream(currentStream);
-            myVideo.current.srcObject = currentStream;
-    
-            // Fetch predictions from backend
-            const fetchPredictions = async () => {
-              try {
-                const response = await axios.get('https://videocall-fa7g.onrender.com/api/predictions');
-                setTranscript(response.data.map(p => p.text));
-              } catch (error) {
-                console.error("Error fetching predictions:", error);
-              }
-            };
-    
+      navigator.mediaDevices
+        .getUserMedia({ video: true, audio: true })
+        .then((currentStream) => {
+          setStream(currentStream);
+          myVideo.current.srcObject = currentStream;
+  
+          // Fetch predictions from backend
+          const fetchPredictions = async () => {
+            try {
+              const response = await axios.get('https://videocall-fa7g.onrender.com/api/predictions');
+              setTranscript(response.data.map((p) => p.text));
+            } catch (error) {
+              console.error("Error fetching predictions:", error);
+            }
+          };
+  
+          // Fetch predictions initially
+          fetchPredictions();
+  
+          // Set an interval to fetch predictions every 500ms
+          const intervalId = setInterval(() => {
             fetchPredictions();
-    
-            // Listen for new predictions stored while in doctor role
-            window.addEventListener("storage", handleStorageChange);
-          })
-          .catch((error) => {
-            console.error("Error accessing media devices.", error);
-          });
-    
-        // Cleanup listener when switching roles
-        return () => {
-          window.removeEventListener("storage", handleStorageChange);
-        };
-      }
-    }, [role]);
-
+          }, 500);
+  
+          // Event listener for storage change, which could include new predictions
+          const handleStorageChange = (event) => {
+            if (event.key === "predictions") {
+              fetchPredictions();
+            }
+          };
+  
+          window.addEventListener("storage", handleStorageChange);
+  
+          // Cleanup the interval and event listener when the component unmounts or role changes
+          return () => {
+            clearInterval(intervalId);
+            window.removeEventListener("storage", handleStorageChange);
+          };
+        })
+        .catch((error) => {
+          console.error("Error accessing media devices.", error);
+        });
+    }
+  }, [role]);
   // Handle storage changes to update transcript in real-time
   const handleStorageChange = (event) => {
     if (event.key === "predictions") {
