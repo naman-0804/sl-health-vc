@@ -13,7 +13,7 @@ import { Camera } from "@mediapipe/camera_utils";
 import * as tf from "@tensorflow/tfjs";
 
 // Initialize socket connection
-const socket = io.connect("http://localhost:5000/"); // Update if needed
+const socket = io.connect(/*"http://localhost:5000/"*/"https://sl-health.onrender.com/"); // Update if needed
 
 function App() {
   const [me, setMe] = useState("");
