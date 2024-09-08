@@ -47,6 +47,14 @@ app.get('/api/predictions', async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 });
+app.delete('/api/predictions', async (req, res) => {
+  try {
+    await Prediction.deleteMany({});
+    res.status(200).send('All predictions deleted successfully');
+  } catch (error) {
+    res.status(500).send('Error deleting predictions: ' + error.message);
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
