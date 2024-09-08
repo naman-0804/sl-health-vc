@@ -201,6 +201,7 @@ function App() {
     const classNames = ["Hi", "Bye"]; // Update based on your model's classes
     return classNames[maxIndex];
   };
+  
 
   // Draw hand landmarks on canvas
   const drawHand = (canvasCtx, landmarks, connections) => {
@@ -274,13 +275,15 @@ function App() {
     peer.signal(callerSignal);
     connectionRef.current = peer;
   };
-
-  // Leave an ongoing call
   const leaveCall = () => {
     setCallEnded(true);
     connectionRef.current.destroy();
+    
+    // Optionally clear predictions from localStorage
+    localStorage.removeItem("predictions");
+    
     window.location.reload();
-  };
+};
 
   return (
     <>
@@ -299,7 +302,7 @@ function App() {
             </>
           )}
         </div>
-
+  
         {/* Video Streams */}
         <div className="video-container">
           <div className="video">
@@ -327,7 +330,7 @@ function App() {
             ) : null}
           </div>
         </div>
-
+  
         {/* User ID and Call Controls */}
         <div className="myId">
           <TextField
@@ -343,7 +346,7 @@ function App() {
               Copy ID
             </Button>
           </CopyToClipboard>
-
+  
           <TextField
             id="filled-basic"
             label="ID to call"
@@ -353,9 +356,14 @@ function App() {
           />
           <div className="call-button">
             {callAccepted && !callEnded ? (
-              <Button variant="contained" color="secondary" onClick={leaveCall}>
-                End Call
-              </Button>
+              <>
+                <Button variant="contained" color="secondary" onClick={leaveCall}>
+                  End Call
+                </Button>
+                <Button variant="contained" color="secondary" onClick={leaveCall} style={{ marginLeft: "10px" }}>
+                  Leave Call
+                </Button>
+              </>
             ) : (
               <IconButton color="primary" aria-label="call" onClick={() => callUser(idToCall)}>
                 <PhoneIcon fontSize="large" />
@@ -363,7 +371,7 @@ function App() {
             )}
           </div>
         </div>
-
+  
         {/* Incoming Call Notification */}
         {receivingCall && !callAccepted && (
           <div className="caller">
@@ -373,17 +381,13 @@ function App() {
             </Button>
           </div>
         )}
-
+  
         {/* Transcript for Doctor */}
         {role === "doctor" && (
           <div className="transcript-container">
             <h2>Transcript:</h2>
             {transcript.length > 0 ? (
-              <ul>
-                {transcript.map((text, index) => (
-                  <li key={index}>{text}</li>
-                ))}
-              </ul>
+              <textarea readOnly value={transcript.join(" ")} />
             ) : (
               <p>No predictions available.</p>
             )}
