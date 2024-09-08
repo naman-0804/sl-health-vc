@@ -11,6 +11,7 @@ import "./App.css";
 import { Hands, HAND_CONNECTIONS } from "@mediapipe/hands";
 import { Camera } from "@mediapipe/camera_utils";
 import * as tf from "@tensorflow/tfjs";
+import axios from 'axios';
 
 // Initialize socket connection
 const socket = io.connect(/*"http://localhost:5000/"*/"https://sl-health.onrender.com/"); // Update if needed
@@ -119,31 +120,37 @@ function App() {
           console.error("Error accessing media devices.", error);
         });
     } else if (role === "doctor") {
-      navigator.mediaDevices
-        .getUserMedia({ video: true, audio: true })
-        .then((currentStream) => {
-          setStream(currentStream);
-          myVideo.current.srcObject = currentStream;
-
-          // Fetch predictions from localStorage
-          const storedPredictions = localStorage.getItem("predictions");
-          if (storedPredictions) {
-            setTranscript(JSON.parse(storedPredictions));
-          }
-
-          // Listen for new predictions stored while in doctor role
-          window.addEventListener("storage", handleStorageChange);
-        })
-        .catch((error) => {
-          console.error("Error accessing media devices.", error);
-        });
-
-      // Cleanup listener when switching roles
-      return () => {
-        window.removeEventListener("storage", handleStorageChange);
-      };
-    }
-  }, [role]);
+        navigator.mediaDevices
+          .getUserMedia({ video: true, audio: true })
+          .then((currentStream) => {
+            setStream(currentStream);
+            myVideo.current.srcObject = currentStream;
+    
+            // Fetch predictions from backend
+            const fetchPredictions = async () => {
+              try {
+                const response = await axios.get('http://localhost:5127/api/predictions');
+                setTranscript(response.data.map(p => p.text));
+              } catch (error) {
+                console.error("Error fetching predictions:", error);
+              }
+            };
+    
+            fetchPredictions();
+    
+            // Listen for new predictions stored while in doctor role
+            window.addEventListener("storage", handleStorageChange);
+          })
+          .catch((error) => {
+            console.error("Error accessing media devices.", error);
+          });
+    
+        // Cleanup listener when switching roles
+        return () => {
+          window.removeEventListener("storage", handleStorageChange);
+        };
+      }
+    }, [role]);
 
   // Handle storage changes to update transcript in real-time
   const handleStorageChange = (event) => {
@@ -157,7 +164,7 @@ function App() {
   const makePrediction = async (landmarks) => {
     if (modelRef.current) {
       const image = new Float32Array(224 * 224 * 3).fill(0);
-
+  
       landmarks.forEach((l) => {
         const x = Math.floor(l.x * 224);
         const y = Math.floor(l.y * 224);
@@ -168,22 +175,24 @@ function App() {
           image[pos + 2] = l.z;
         }
       });
-
+  
       const tensorInput = tf.tensor4d(image, [1, 224, 224, 3]);
-
+  
       try {
         const prediction = await modelRef.current.predict(tensorInput);
         const predictionArray = await prediction.array();
-
         const predictionText = predictionToText(predictionArray);
-
+  
         console.log("Patient-side prediction:", predictionText);
-
-        // Store prediction in localStorage
+  
+        // Send prediction to backend
+        await axios.post('http://localhost:5127/api/predictions', { text: predictionText });
+  
+        // Store prediction in localStorage (optional)
         const existingPredictions = JSON.parse(localStorage.getItem("predictions")) || [];
         const updatedPredictions = [...existingPredictions, predictionText];
         localStorage.setItem("predictions", JSON.stringify(updatedPredictions));
-
+  
         // If in doctor role, update transcript immediately
         if (role === "doctor") {
           setTranscript(updatedPredictions);
