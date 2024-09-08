@@ -284,15 +284,20 @@ function App() {
     peer.signal(callerSignal);
     connectionRef.current = peer;
   };
-  const leaveCall = () => {
+  const leaveCall = async () => {
     setCallEnded(true);
     connectionRef.current.destroy();
-    
-    // Optionally clear predictions from localStorage
-    localStorage.removeItem("predictions");
-    
+  
+    try {
+      // Send a delete request to the backend to remove all predictions
+      await axios.delete('https://videocall-fa7g.onrender.com/api/predictions');
+      console.log("All predictions deleted successfully");
+    } catch (error) {
+      console.error("Error deleting predictions:", error);
+    }
+  
     window.location.reload();
-};
+  };
 
   return (
     <>
