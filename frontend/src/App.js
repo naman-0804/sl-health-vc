@@ -129,7 +129,7 @@ function App() {
             // Fetch predictions from backend
             const fetchPredictions = async () => {
               try {
-                const response = await axios.get('http://localhost:5127/api/predictions');
+                const response = await axios.get('https://videocall-fa7g.onrender.com/api/predictions');
                 setTranscript(response.data.map(p => p.text));
               } catch (error) {
                 console.error("Error fetching predictions:", error);
@@ -186,7 +186,7 @@ function App() {
         console.log("Patient-side prediction:", predictionText);
   
         // Send prediction to backend
-        await axios.post('http://localhost:5127/api/predictions', { text: predictionText });
+        await axios.post('https://videocall-fa7g.onrender.com/api/predictions', { text: predictionText });
   
         // Store prediction in localStorage (optional)
         const existingPredictions = JSON.parse(localStorage.getItem("predictions")) || [];
