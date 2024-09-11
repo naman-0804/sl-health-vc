@@ -219,7 +219,7 @@ function App() {
   const predictionToText = (predictionArray) => {
     const output = predictionArray[0];
     const maxIndex = output.indexOf(Math.max(...output));
-    const classNames = ["Hi", "Bye"]; // Update based on your model's classes
+    const classNames = ["Label_1", "Label_2"]; 
     return classNames[maxIndex];
   };
   
