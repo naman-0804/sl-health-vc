@@ -121,7 +121,7 @@ function App() {
         });
     } else if (role === "doctor") {
       navigator.mediaDevices
-        .getUserMedia({ video: true, audio: true })
+        .getUserMedia({ video: true, audio: false })
         .then((currentStream) => {
           setStream(currentStream);
           myVideo.current.srcObject = currentStream;
